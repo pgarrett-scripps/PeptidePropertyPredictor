@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools"]
+
+[project]
+name = "peptide_property_predictor"
+authors = [
+    {name = "Patrick Garrett", email = "pgarrett@scripps.edu"},
+]
+description = "A very simple peptide property predictor."
+readme = "README.md"
+requires-python = ">=3.8"
+dynamic = ["version"]
+dependencies = [
+    'pandas',
+    'scikit-learn',
+    'tensorflow',
+    'filterframes',
+    'numpy',
+    'matplotlib'
+]
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.dynamic]
+version = {attr = "peptide_property_predictor.__version__"}
+
+[tool.setuptools.package-data]
+myModule = ["*.h5"]
+
+[project.urls]
+repository = "https://github.com/pgarrett-scripps/PeptidePropertyPredictor.git"
+
+[tool.pylint]
+max-line-length = 120
+fail-under = 9.5
+good-names = ["db", "ax", 'r']
+extension-pkg-whitelist='pydantic'
+disable = "E0401"
