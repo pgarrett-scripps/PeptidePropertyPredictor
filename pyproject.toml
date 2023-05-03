@@ -20,12 +20,10 @@ dependencies = [
 ]
 [tool.setuptools]
 package-dir = {"" = "src"}
+package_data = {"" = ["models/*.h5"]}
 
 [tool.setuptools.dynamic]
 version = {attr = "peptide_property_predictor.__version__"}
-
-[tool.setuptools.package-data]
-myModule = ["models/*.h5"]
 
 [project.urls]
 repository = "https://github.com/pgarrett-scripps/PeptidePropertyPredictor.git"
