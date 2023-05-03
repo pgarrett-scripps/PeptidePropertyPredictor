@@ -6,9 +6,10 @@ import os
 from typing import List, Union
 
 import keras
+import numpy as np
 from tensorflow.keras.models import load_model
 
-from .preprocessing import preprocess_sequences
+from .preprocessing import preprocess_sequences, verify_all_characters_are_in_subset
 
 
 class PropertyPredictor:
@@ -26,7 +27,7 @@ class PropertyPredictor:
         self.model = None
         self.load_model(model)
 
-    def load_model(self, model: Union[keras.Model,str]):
+    def load_model(self, model: Union[keras.Model,str]) -> None:
         """
         Replaces the loaded model with a new model or a path to a saved model.
 
@@ -41,7 +42,7 @@ class PropertyPredictor:
         else:
             self.model = model
 
-    def predict(self, sequences: List[str]):
+    def predict(self, sequences: List[str]) -> List[Union[float, None]]:
         """
         Predicts the property values for the given amino acid sequences.
 
@@ -53,24 +54,25 @@ class PropertyPredictor:
         """
 
         max_len = self.model.layers[0].input_shape[1]
-        valid_sequences = []
-        valid_indices = []
-
-        for idx, seq in enumerate(sequences):
-            if len(seq) <= max_len:
-                valid_sequences.append(seq)
-                valid_indices.append(idx)
-
+        valid_indices = get_valid_sequence_indices(sequences, max_len)
+        valid_sequences = [sequences[idx] for idx in valid_indices]
         valid_predictions = _predict_property(valid_sequences, self.model)
 
         predictions = [None] * len(sequences)
         for idx, pred in zip(valid_indices, valid_predictions):
-            predictions[idx] = pred
+            predictions[idx] = float(pred)
 
         return predictions
 
 
-def _predict_property(sequences: List[str], model: keras.Model):
+def get_valid_sequence_indices(sequences: List[str], max_len) -> List[int]:
+    valid_indices = []
+    for idx, seq in enumerate(sequences):
+        if 0 < len(seq) <= max_len and verify_all_characters_are_in_subset(seq) is True:
+            valid_indices.append(idx)
+    return valid_indices
+
+def _predict_property(sequences: List[str], model: keras.Model) -> np.ndarray:
     """
     A helper function that predicts the property values for the given amino acid sequences using the provided model.
 

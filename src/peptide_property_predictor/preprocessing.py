@@ -43,3 +43,21 @@ def preprocess_sequences(sequences: List[str], max_seq_len: int):
     padded_sequences = np.array([np.pad(seq, ((0, max_seq_len - len(seq)), (0, 0))) for seq in encoded_sequences])
 
     return padded_sequences
+
+
+def verify_all_characters_are_in_subset(sequence: str):
+    """
+    Verifies that all characters in the sequence are in the subset of characters used for training the model.
+
+    Args:
+        sequence (str): An amino acid sequence.
+
+    Raises:
+        ValueError: If any of the characters in the sequence are not in the subset of characters used for training
+            the model.
+    """
+
+    for char in sequence:
+        if char not in IP2_SEQUENCE_CHARACTERS:
+            return False
+    return True

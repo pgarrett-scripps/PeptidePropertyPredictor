@@ -2,8 +2,9 @@
 This module contains functions for training a model to predict peptide properties.
 """
 
-from typing import List
+from typing import List, Tuple
 
+import matplotlib
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy.stats import pearsonr
@@ -17,11 +18,11 @@ from tensorflow.keras.layers import Dense, Dropout, Activation, Flatten, Conv1D,
     BatchNormalization
 from tensorflow.keras.models import Sequential
 
+from .predict import get_valid_sequence_indices
 from .preprocessing import preprocess_sequences, IP2_SEQUENCE_CHARACTERS
 
 
-
-def pearson_r(y_true, y_pred):
+def pearson_r(y_true, y_pred) -> float:
     """
     Calculates the Pearson correlation coefficient between the true and predicted values.
     :param y_true: true values
@@ -32,10 +33,10 @@ def pearson_r(y_true, y_pred):
     mean_y_pred = K.mean(y_pred)
     num = K.sum((y_true - mean_y_true) * (y_pred - mean_y_pred))
     den = K.sqrt(K.sum(K.square(y_true - mean_y_true)) * K.sum(K.square(y_pred - mean_y_pred)))
-    return num / (den + K.epsilon())
+    return float(num / (den + K.epsilon()))
 
 
-def build_default_model_big(input_shape):
+def build_default_model_big(input_shape) -> keras.Model:
     """
     Builds a default model for peptide property prediction.
     """
@@ -70,7 +71,7 @@ def build_default_model_big(input_shape):
     return model
 
 
-def build_default_model_small(input_shape):
+def build_default_model_small(input_shape) -> keras.Model:
     """
     Builds a default model for peptide property prediction.
     """
@@ -100,7 +101,8 @@ def build_default_model_small(input_shape):
     return model
 
 
-def split_data(sequences: List[str], property_values: np.ndarray, max_seq_len: int = 64):
+def split_data(sequences: List[str], property_values: np.ndarray, max_seq_len: int = 64) -> \
+        Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
     Splits and preprocesses the input data into training and testing sets.
 
@@ -113,17 +115,16 @@ def split_data(sequences: List[str], property_values: np.ndarray, max_seq_len: i
         tuple: A tuple containing the training and testing data (X_train, X_test, y_train, y_test).
     """
 
-    filtered_data = [(sequence, rt) for sequence, rt in zip(sequences, property_values) if len(sequence) <= max_seq_len]
-    sequences, property_values = zip(*filtered_data)
-    sequences = list(sequences)
-    property_values = np.array(property_values)
+    valid_indices = get_valid_sequence_indices(sequences, max_seq_len)
+    valid_sequences = [sequences[idx] for idx in valid_indices]
+    valid_property_values = np.array([property_values[idx] for idx in valid_indices])
 
     # Normalize RT values
     rt_scaler = MinMaxScaler()
-    rt_values_normalized = rt_scaler.fit_transform(property_values.reshape(-1, 1)).flatten()
+    rt_values_normalized = rt_scaler.fit_transform(valid_property_values.reshape(-1, 1)).flatten()
 
     # Preprocessing: One-hot encoding
-    padded_sequences = preprocess_sequences(sequences, max_seq_len)
+    padded_sequences = preprocess_sequences(valid_sequences, max_seq_len)
 
     # Split the dataset
     x_train, x_test, y_train, y_test = train_test_split(padded_sequences, rt_values_normalized, test_size=0.2,
@@ -139,7 +140,7 @@ def train_model(x_train: np.ndarray,
                 epochs: int = 100,
                 batch_size: int = 128,
                 min_delta: float = 0.0001,
-                patience: int = 5):
+                patience: int = 5) -> keras.Model:
     """
     Trains a model using the provided training data and validates it using the testing data.
 
@@ -173,7 +174,7 @@ def train_model(x_train: np.ndarray,
     return model
 
 
-def visualize_predictions(model: keras.Model, x_test: np.ndarray, y_test: np.ndarray):
+def visualize_predictions(model: keras.Model, x_test: np.ndarray, y_test: np.ndarray) -> matplotlib.figure.Figure:
     """
     Visualizes the predictions of the model against the true values and calculates the Pearson R value.
 
