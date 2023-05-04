@@ -26,7 +26,7 @@ namespaces = true
 where = ["src"]
 
 [tool.setuptools.package-data]
-"peptide_property_predictor.data" = ["*.h5"]
+"peptide_property_predictor.models" = ["*.h5"]
 
 [tool.setuptools.dynamic]
 version = {attr = "peptide_property_predictor.__version__"}
