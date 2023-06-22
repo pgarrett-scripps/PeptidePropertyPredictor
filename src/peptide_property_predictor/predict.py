@@ -16,7 +16,8 @@ class PropertyPredictor:
     """
     A class for predicting the properties of amino acid sequences using a trained model.
     """
-    def __init__(self, model: Union[keras.Model,str]):
+
+    def __init__(self, model: Union[keras.Model, str]):
         """
         Initializes the PropertyPredictor with a model or a path to a saved model.
 
@@ -27,7 +28,7 @@ class PropertyPredictor:
         self.model = None
         self.load_model(model)
 
-    def load_model(self, model: Union[keras.Model,str]) -> None:
+    def load_model(self, model: Union[keras.Model, str]) -> None:
         """
         Replaces the loaded model with a new model or a path to a saved model.
 
@@ -71,6 +72,7 @@ def get_valid_sequence_indices(sequences: List[str], max_len) -> List[int]:
         if 0 < len(seq) <= max_len and verify_all_characters_are_in_subset(seq) is True:
             valid_indices.append(idx)
     return valid_indices
+
 
 def _predict_property(sequences: List[str], model: keras.Model) -> np.ndarray:
     """
