@@ -9,7 +9,8 @@ import keras
 import numpy as np
 from tensorflow.keras.models import load_model
 
-from .preprocessing import preprocess_sequences, verify_all_characters_are_in_subset
+from peptide_property_predictor.sequence_processing import verify_sequence, encode_and_pad_sequence, \
+    get_valid_sequence_indices
 
 
 class PropertyPredictor:
@@ -43,7 +44,7 @@ class PropertyPredictor:
         else:
             self.model = model
 
-    def predict(self, sequences: List[str]) -> List[Union[float, None]]:
+    def predict(self, sequences: List[str], charges: List[int] = None) -> List[Union[float, None]]:
         """
         Predicts the property values for the given amino acid sequences.
 
@@ -53,11 +54,19 @@ class PropertyPredictor:
         Returns:
             list: List of predicted property values for the input sequences.
         """
+        if charges is not None:
+            max_len = self.model.input_shape[0][1] - 1
+        else:
+            max_len = self.model.input_shape[1] - 1
 
-        max_len = self.model.layers[0].input_shape[1]
         valid_indices = get_valid_sequence_indices(sequences, max_len)
         valid_sequences = [sequences[idx] for idx in valid_indices]
-        valid_predictions = _predict_property(valid_sequences, self.model)
+
+        if charges is not None:
+            valid_charges = [charges[idx] for idx in valid_indices]
+            valid_predictions = _predict_property(valid_sequences, self.model, valid_charges)
+        else:
+            valid_predictions = _predict_property(valid_sequences, self.model)
 
         predictions = [None] * len(sequences)
         for idx, pred in zip(valid_indices, valid_predictions):
@@ -66,15 +75,7 @@ class PropertyPredictor:
         return predictions
 
 
-def get_valid_sequence_indices(sequences: List[str], max_len) -> List[int]:
-    valid_indices = []
-    for idx, seq in enumerate(sequences):
-        if 0 < len(seq) <= max_len and verify_all_characters_are_in_subset(seq) is True:
-            valid_indices.append(idx)
-    return valid_indices
-
-
-def _predict_property(sequences: List[str], model: keras.Model) -> np.ndarray:
+def _predict_property(sequences: List[str], model: keras.Model, charges: List[int] = None) -> np.ndarray:
     """
     A helper function that predicts the property values for the given amino acid sequences using the provided model.
 
@@ -86,6 +87,19 @@ def _predict_property(sequences: List[str], model: keras.Model) -> np.ndarray:
         numpy.array: A numpy array containing the predicted property values for the input sequences.
     """
 
+    if charges is not None:
+        max_len = model.input_shape[0][1] - 1
+    else:
+        max_len = model.input_shape[1] - 1
+
     # Preprocessing: One-hot encoding
-    padded_sequences = preprocess_sequences(sequences, model.layers[0].input_shape[1])
-    return model.predict(padded_sequences).flatten()
+    X_sequences = np.array([encode_and_pad_sequence(seq, max_len) for seq in sequences]).astype(np.float32)
+
+    if charges is not None:
+        X_charge = np.array([float(charge) for charge in charges]).astype(np.float32)
+        X_data = (X_sequences, X_charge)
+
+    else:
+        X_data = X_sequences
+
+    return model.predict(X_data).flatten()
