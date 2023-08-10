@@ -16,7 +16,8 @@ dependencies = [
     'tensorflow',
     'filterframes',
     'numpy',
-    'matplotlib'
+    'matplotlib',
+    'peptacular'
 ]
 
 [tool.setuptools.packages.find]

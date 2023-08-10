@@ -90,6 +90,8 @@ pandas==2.0.1
     # via
     #   filterframes
     #   peptide-property-predictor (setup.py)
+peptacular==0.3.0
+    # via peptide-property-predictor (setup.py)
 pillow==9.5.0
     # via matplotlib
 protobuf==4.22.3
@@ -110,6 +112,8 @@ python-dateutil==2.8.2
     #   pandas
 pytz==2023.3
     # via pandas
+regex==2023.8.8
+    # via peptacular
 requests==2.29.0
     # via
     #   requests-oauthlib
